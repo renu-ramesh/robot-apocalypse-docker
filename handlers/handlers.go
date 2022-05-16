@@ -29,7 +29,7 @@ func (h Handler) getAlbums(c *gin.Context) {
 }
 
 // postAlbums adds an album from JSON received in the request body.
-func (h Handler) postAlbums(c *gin.Context) {
+func postAlbums(c *gin.Context) {
 	var newAlbum models.Album
 
 	// Call BindJSON to bind the received JSON to
@@ -45,7 +45,7 @@ func (h Handler) postAlbums(c *gin.Context) {
 
 // getAlbumByID locates the album whose ID value matches the id
 // parameter sent by the client, then returns that album as a response.
-func (h Handler) getAlbumByID(c *gin.Context) {
+func getAlbumByID(c *gin.Context) {
 	id := c.Param("id")
 
 	// Loop through the list of albums, looking for
