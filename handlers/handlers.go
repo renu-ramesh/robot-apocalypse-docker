@@ -3,8 +3,9 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
 	"github.com/renu-ramesh/robot-apocalypse-docker/models"
+
+	"github.com/gin-gonic/gin"
 )
 
 // albums slice to seed record album data.
@@ -21,7 +22,7 @@ func getAlbums(c *gin.Context) {
 
 // postAlbums adds an album from JSON received in the request body.
 func postAlbums(c *gin.Context) {
-	newAlbum := models.Album
+	var newAlbum models.Album
 
 	// Call BindJSON to bind the received JSON to
 	// newAlbum.
