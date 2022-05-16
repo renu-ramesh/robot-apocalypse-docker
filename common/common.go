@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"log"
 	"os"
-	"smbteam4/models"
 
 	"github.com/joho/godotenv"
+	"github.com/renu-ramesh/robot-apocalypse-docker/models"
 )
 
 func GetenvData(key string) string {

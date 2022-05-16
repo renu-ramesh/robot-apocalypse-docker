@@ -1,11 +1,11 @@
-module smbteam4
+module github.com/renu-ramesh/robot-apocalypse-docker
 
-go 1.17
+go 1.18
 
 require (
 	github.com/gorilla/mux v1.8.0
 	github.com/joho/godotenv v1.4.0
-	go.mongodb.org/mongo-driver v1.8.4
+	go.mongodb.org/mongo-driver v1.9.1
 )
 
 require (

@@ -8,11 +8,10 @@ import (
 	"log"
 	"net/http"
 
-	"smbteam4/common"
-	"smbteam4/models"
-	"smbteam4/mongodb"
-
 	"github.com/gorilla/mux"
+	"github.com/renu-ramesh/robot-apocalypse-docker/common"
+	"github.com/renu-ramesh/robot-apocalypse-docker/models"
+	"github.com/renu-ramesh/robot-apocalypse-docker/mongodb"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
