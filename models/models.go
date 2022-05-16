@@ -1,9 +1,21 @@
 package models
 
-// album represents data about a record album.
-type Album struct {
-	ID     string  `json:"id"`
-	Title  string  `json:"title"`
-	Artist string  `json:"artist"`
-	Price  float64 `json:"price"`
+type Survivor struct {
+	Id       string   `json:"id"`
+	Name     string   `json:"name"`
+	Age      int      `json:"age"`
+	Gender   string   `json:"gender"`
+	Location Location `json:"location"`
+	Resource []string `json:"resource"`
+	Status   int      `json:"status"`
+}
+type Location struct {
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+}
+type Response struct {
+	Message string      `json:"message"`
+	Success bool        `json:"success"`
+	Data    interface{} `json:"data"`
+	Error   interface{} `json:"error"`
 }
