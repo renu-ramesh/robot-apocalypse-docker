@@ -9,6 +9,7 @@ import (
 )
 
 type Handler struct {
+	flag bool
 }
 
 func NewHandler() Handler {
