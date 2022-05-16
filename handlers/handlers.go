@@ -8,6 +8,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type Handler struct {
+}
+
+func NewHandler() Handler {
+	return Handler{}
+}
+
 // albums slice to seed record album data.
 var albums = []models.Album{
 	{ID: "1", Title: "Blue Train", Artist: "John Coltrane", Price: 56.99},
@@ -16,12 +23,12 @@ var albums = []models.Album{
 }
 
 // getAlbums responds with the list of all albums as JSON.
-func getAlbums(c *gin.Context) {
+func (h Handler) getAlbums(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, albums)
 }
 
 // postAlbums adds an album from JSON received in the request body.
-func postAlbums(c *gin.Context) {
+func (h Handler) postAlbums(c *gin.Context) {
 	var newAlbum models.Album
 
 	// Call BindJSON to bind the received JSON to
@@ -37,7 +44,7 @@ func postAlbums(c *gin.Context) {
 
 // getAlbumByID locates the album whose ID value matches the id
 // parameter sent by the client, then returns that album as a response.
-func getAlbumByID(c *gin.Context) {
+func (h Handler) getAlbumByID(c *gin.Context) {
 	id := c.Param("id")
 
 	// Loop through the list of albums, looking for
