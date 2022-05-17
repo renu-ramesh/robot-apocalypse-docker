@@ -1,4 +1,4 @@
-package common
+package helpers
 
 import (
 	"encoding/json"
@@ -9,11 +9,13 @@ import (
 	"github.com/renu-ramesh/robot-apocalypse-docker/models"
 )
 
-func GetenvData(key string) string {
+func init() {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
+}
+func GetenvData(key string) string {
 	value := os.Getenv(key)
 	return value
 }

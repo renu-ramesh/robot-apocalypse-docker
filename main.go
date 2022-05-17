@@ -9,7 +9,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/renu-ramesh/robot-apocalypse-docker/common"
+	"github.com/renu-ramesh/robot-apocalypse-docker/helpers"
 	"github.com/renu-ramesh/robot-apocalypse-docker/models"
 	"github.com/renu-ramesh/robot-apocalypse-docker/mongodb"
 	"go.mongodb.org/mongo-driver/bson"
@@ -39,7 +39,7 @@ func handleRequests() {
 	myRouter.HandleFunc("/api/v1/survivors/{spec}", listSurvivors)
 	myRouter.HandleFunc("/api/v1/robots/all", listAllRobots)
 
-	port := common.GetenvData("PORT")
+	port := helpers.GetenvData("PORT")
 	log.Fatal(http.ListenAndServe(":"+port, myRouter))
 }
 func createNewsurvivors(w http.ResponseWriter, r *http.Request) {
@@ -60,7 +60,7 @@ func createNewsurvivors(w http.ResponseWriter, r *http.Request) {
 		"Id": bson.M{"$eq": survivor_data.Id},
 	}
 	//Fetch total document count
-	count, err := mongodb.MongoDBCountDocuments(client, ctx, common.GetenvData("DB_NAME"), common.GetenvData("COLLECTION_NAME"), filter)
+	count, err := mongodb.MongoDBCountDocuments(client, ctx, helpers.GetenvData("DB_NAME"), helpers.GetenvData("COLLECTION_NAME"), filter)
 	if err != nil {
 		fmt.Fprintf(w, "%+v", err)
 	}
@@ -71,7 +71,7 @@ func createNewsurvivors(w http.ResponseWriter, r *http.Request) {
 			Data:    nil,
 			Error:   err,
 		}
-		fmt.Fprintf(w, "%+v", common.JSON_Marshell(response))
+		fmt.Fprintf(w, "%+v", helpers.JSON_Marshell(response))
 	} else {
 
 		var document interface{}
@@ -85,8 +85,8 @@ func createNewsurvivors(w http.ResponseWriter, r *http.Request) {
 			{"Resource", survivor_data.Resource},
 			{"Status", 0},
 		}
-		insertResult, err := mongodb.MongoDBinsertOne(client, ctx, common.GetenvData("DB_NAME"),
-			common.GetenvData("COLLECTION_NAME"), document)
+		insertResult, err := mongodb.MongoDBinsertOne(client, ctx, helpers.GetenvData("DB_NAME"),
+			helpers.GetenvData("COLLECTION_NAME"), document)
 		if err != nil {
 			fmt.Fprintf(w, "%+v", err1)
 		}
@@ -96,7 +96,7 @@ func createNewsurvivors(w http.ResponseWriter, r *http.Request) {
 			Data:    insertResult.InsertedID,
 			Error:   err,
 		}
-		fmt.Fprintf(w, "%+v", common.JSON_Marshell(response))
+		fmt.Fprintf(w, "%+v", helpers.JSON_Marshell(response))
 	}
 
 }
@@ -123,7 +123,7 @@ func updateSurvivorsLocation(w http.ResponseWriter, r *http.Request) {
 	update := bson.M{
 		"$set": bson.M{"Location": survivor.Location},
 	}
-	result, err := mongodb.MongoDBUpdateOne(client, ctx, common.GetenvData("DB_NAME"), common.GetenvData("COLLECTION_NAME"), filter, update)
+	result, err := mongodb.MongoDBUpdateOne(client, ctx, helpers.GetenvData("DB_NAME"), helpers.GetenvData("COLLECTION_NAME"), filter, update)
 	if err != nil {
 		fmt.Fprintf(w, "%+v", err)
 	}
@@ -133,7 +133,7 @@ func updateSurvivorsLocation(w http.ResponseWriter, r *http.Request) {
 		Data:    result.ModifiedCount,
 		Error:   err,
 	}
-	fmt.Fprintf(w, "%+v", common.JSON_Marshell(response))
+	fmt.Fprintf(w, "%+v", helpers.JSON_Marshell(response))
 }
 
 //Function to Update data of infected survivor
@@ -158,7 +158,7 @@ func updateInfection(w http.ResponseWriter, r *http.Request) {
 	update := bson.M{
 		"$inc": bson.M{"Status": 1},
 	}
-	result, err := mongodb.MongoDBUpdateOne(client, ctx, common.GetenvData("DB_NAME"), common.GetenvData("COLLECTION_NAME"), filter, update)
+	result, err := mongodb.MongoDBUpdateOne(client, ctx, helpers.GetenvData("DB_NAME"), helpers.GetenvData("COLLECTION_NAME"), filter, update)
 	if err != nil {
 		fmt.Fprintf(w, "%+v", err)
 	}
@@ -169,7 +169,7 @@ func updateInfection(w http.ResponseWriter, r *http.Request) {
 		Data:    result.ModifiedCount,
 		Error:   err,
 	}
-	fmt.Fprintf(w, "%+v", common.JSON_Marshell(response))
+	fmt.Fprintf(w, "%+v", helpers.JSON_Marshell(response))
 }
 
 // Function to find Percentage of infected/non-infected survivors
@@ -185,7 +185,7 @@ func percentageSpecification(w http.ResponseWriter, r *http.Request) {
 		"Id": bson.M{"$ne": ""},
 	}
 	//Fetch total document count
-	total_count, err = mongodb.MongoDBCountDocuments(client, ctx, common.GetenvData("DB_NAME"), common.GetenvData("COLLECTION_NAME"), filter)
+	total_count, err = mongodb.MongoDBCountDocuments(client, ctx, helpers.GetenvData("DB_NAME"), helpers.GetenvData("COLLECTION_NAME"), filter)
 	if err != nil {
 		fmt.Fprintf(w, "%+v", err)
 	}
@@ -206,7 +206,7 @@ func percentageSpecification(w http.ResponseWriter, r *http.Request) {
 	default:
 		fmt.Fprintf(w, "%+v", "404 page not found")
 	}
-	count, err = mongodb.MongoDBCountDocuments(client, ctx, common.GetenvData("DB_NAME"), common.GetenvData("COLLECTION_NAME"), filter)
+	count, err = mongodb.MongoDBCountDocuments(client, ctx, helpers.GetenvData("DB_NAME"), helpers.GetenvData("COLLECTION_NAME"), filter)
 	if err != nil {
 		fmt.Fprintf(w, "%+v", err)
 	}
@@ -220,7 +220,7 @@ func percentageSpecification(w http.ResponseWriter, r *http.Request) {
 		Data:    percentageStr + "%",
 		Error:   err,
 	}
-	fmt.Fprintf(w, "%+v", common.JSON_Marshell(response))
+	fmt.Fprintf(w, "%+v", helpers.JSON_Marshell(response))
 
 }
 
@@ -253,7 +253,7 @@ func listSurvivors(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "%+v", "404 page not found")
 	}
 	option = bson.D{{"_id", 0}}
-	cursor, err := mongodb.MongoDBquery(client, ctx, common.GetenvData("DB_NAME"), common.GetenvData("COLLECTION_NAME"), filter, option)
+	cursor, err := mongodb.MongoDBquery(client, ctx, helpers.GetenvData("DB_NAME"), helpers.GetenvData("COLLECTION_NAME"), filter, option)
 	if err != nil {
 		panic(err)
 	}
@@ -273,7 +273,7 @@ func listSurvivors(w http.ResponseWriter, r *http.Request) {
 func listAllRobots(w http.ResponseWriter, r *http.Request) {
 
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", common.GetenvData("ROBO_CPU_URL"), nil)
+	req, err := http.NewRequest("GET", helpers.GetenvData("ROBO_CPU_URL"), nil)
 	if err != nil {
 		fmt.Print(err.Error())
 	}
@@ -296,6 +296,6 @@ func listAllRobots(w http.ResponseWriter, r *http.Request) {
 		Error:   err,
 	}
 
-	// fmt.Fprintf(w, "%+v", common.JSON_Marshell(response))
+	// fmt.Fprintf(w, "%+v", helpers.JSON_Marshell(response))
 	fmt.Fprintf(w, "%+v", response)
 }

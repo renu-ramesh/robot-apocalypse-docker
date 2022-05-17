@@ -1,20 +1,23 @@
+# Start from a Debian image with the latest version of Go installed
+# and a workspace (GOPATH) configured at /go.
+FROM golang:latest
 
-# syntax=docker/dockerfile:1
-# Alpine is chosen for its small footprint
-# compared to Ubuntu
-FROM golang:1.16-alpine
+# The latest alpine images don't have some tools like (`git` and `bash`).
+# Adding git, bash and openssh to the image
+# RUN apk update && apk upgrade && \
+#     apk add --no-cache bash git openssh
 
+# Set the Current Working Directory inside the container
 WORKDIR /app
-# Download necessary Go modules
-COPY go.mod ./
-COPY go.sum ./
+
+# Copy go mod and sum files
+COPY go.mod go.sum ./
+
+# Download all dependancies. Dependencies will be cached if the go.mod and go.sum files are not changed
 RUN go mod download
 
-COPY *.go ./
-
-RUN go get github.com/renu-ramesh/robot-apocalypse-docker/common
-RUN go get github.com/renu-ramesh/robot-apocalypse-docker/models
-RUN go get github.com/renu-ramesh/robot-apocalypse-docker/mongodb
+# Copy the source from the current directory to the Working Directory inside the container
+COPY . .
 
 ## we run go build to compile the binary
 ## executable of our Go program
