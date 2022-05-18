@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/kelseyhightower/envconfig"
 	"github.com/renu-ramesh/robot-apocalypse-docker/helpers"
 	"github.com/renu-ramesh/robot-apocalypse-docker/models"
 	"github.com/renu-ramesh/robot-apocalypse-docker/mongodb"
@@ -15,22 +17,34 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-const DBCONN string = "mongodb://localhost:27017"
-
-var (
+type Handlers struct {
 	client *mongo.Client
 	ctx    context.Context
 	cancel context.CancelFunc
-)
+}
 
-func createNewsurvivors(w http.ResponseWriter, r *http.Request) {
+func New() Handlers {
+	var env models.EnvVariables
+	err := envconfig.Process("robot_apocalypse", &env)
+	if err != nil {
+		log.Fatal("unable to initialize environment variables", err.Error())
+	}
+	return Handlers{}
+}
 
-	var err error
-	client, ctx, cancel, err = mongodb.MongoDBconnect(DBCONN)
+func (h Handlers) CreateNewsurvivors(w http.ResponseWriter, r *http.Request) {
+
+	var env models.EnvVariables
+	err := envconfig.Process("robot_apocalypse", &env)
+	if err != nil {
+		log.Fatal("unable to initialize environment variables", err.Error())
+	}
+
+	h.client, h.ctx, h.cancel, err = mongodb.MongoDBconnect(env.DatabaseURL)
 	if err != nil {
 		panic(err)
 	}
-	defer mongodb.MongoDBclose(client, ctx, cancel)
+	defer mongodb.MongoDBclose(h.client, h.ctx, h.cancel)
 
 	var survivor_data models.Survivor
 	reqBody, _ := ioutil.ReadAll(r.Body)
@@ -41,9 +55,9 @@ func createNewsurvivors(w http.ResponseWriter, r *http.Request) {
 		"Id": bson.M{"$eq": survivor_data.Id},
 	}
 	//Fetch total document count
-	count, err := mongodb.MongoDBCountDocuments(client, ctx, helpers.GetenvData("DB_NAME"), helpers.GetenvData("COLLECTION_NAME"), filter)
+	count, err := mongodb.MongoDBCountDocuments(h.client, h.ctx, env.DatabaseName, env.Collection, filter)
 	if err != nil {
-		fmt.Fprintf(w, "%+v", err)
+		fmt.Println(err)
 	}
 	if count > 0 {
 		response := models.Response{
@@ -66,8 +80,7 @@ func createNewsurvivors(w http.ResponseWriter, r *http.Request) {
 			{"Resource", survivor_data.Resource},
 			{"Status", 0},
 		}
-		insertResult, err := mongodb.MongoDBinsertOne(client, ctx, helpers.GetenvData("DB_NAME"),
-			helpers.GetenvData("COLLECTION_NAME"), document)
+		insertResult, err := mongodb.MongoDBinsertOne(h.client, h.ctx, env.DatabaseName, env.Collection, document)
 		if err != nil {
 			fmt.Fprintf(w, "%+v", err1)
 		}
@@ -83,13 +96,18 @@ func createNewsurvivors(w http.ResponseWriter, r *http.Request) {
 }
 
 // Function to modify survivors Location
-func updateSurvivorsLocation(w http.ResponseWriter, r *http.Request) {
+func (h Handlers) UpdateSurvivorsLocation(w http.ResponseWriter, r *http.Request) {
 
-	client, ctx, cancel, err := mongodb.MongoDBconnect(DBCONN)
+	var env models.EnvVariables
+	err := envconfig.Process("robot_apocalypse", &env)
+	if err != nil {
+		log.Fatal("unable to initialize environment variables", err.Error())
+	}
+	h.client, h.ctx, h.cancel, err = mongodb.MongoDBconnect(env.DatabaseURL)
 	if err != nil {
 		panic(err)
 	}
-	defer mongodb.MongoDBclose(client, ctx, cancel)
+	defer mongodb.MongoDBclose(h.client, h.ctx, h.cancel)
 
 	var survivor models.Survivor
 	reqBody, _ := ioutil.ReadAll(r.Body)
@@ -104,7 +122,7 @@ func updateSurvivorsLocation(w http.ResponseWriter, r *http.Request) {
 	update := bson.M{
 		"$set": bson.M{"Location": survivor.Location},
 	}
-	result, err := mongodb.MongoDBUpdateOne(client, ctx, helpers.GetenvData("DB_NAME"), helpers.GetenvData("COLLECTION_NAME"), filter, update)
+	result, err := mongodb.MongoDBUpdateOne(h.client, h.ctx, env.DatabaseName, env.Collection, filter, update)
 	if err != nil {
 		fmt.Fprintf(w, "%+v", err)
 	}
@@ -118,12 +136,18 @@ func updateSurvivorsLocation(w http.ResponseWriter, r *http.Request) {
 }
 
 //Function to Update data of infected survivor
-func updateInfection(w http.ResponseWriter, r *http.Request) {
-	client, ctx, cancel, err := mongodb.MongoDBconnect(DBCONN)
+func (h Handlers) UpdateInfection(w http.ResponseWriter, r *http.Request) {
+
+	var env models.EnvVariables
+	err := envconfig.Process("robot_apocalypse", &env)
+	if err != nil {
+		log.Fatal("unable to initialize environment variables", err.Error())
+	}
+	h.client, h.ctx, h.cancel, err = mongodb.MongoDBconnect(env.DatabaseURL)
 	if err != nil {
 		panic(err)
 	}
-	defer mongodb.MongoDBclose(client, ctx, cancel)
+	defer mongodb.MongoDBclose(h.client, h.ctx, h.cancel)
 
 	var survivor models.Survivor
 	reqBody, _ := ioutil.ReadAll(r.Body)
@@ -139,7 +163,7 @@ func updateInfection(w http.ResponseWriter, r *http.Request) {
 	update := bson.M{
 		"$inc": bson.M{"Status": 1},
 	}
-	result, err := mongodb.MongoDBUpdateOne(client, ctx, helpers.GetenvData("DB_NAME"), helpers.GetenvData("COLLECTION_NAME"), filter, update)
+	result, err := mongodb.MongoDBUpdateOne(h.client, h.ctx, env.DatabaseName, env.Collection, filter, update)
 	if err != nil {
 		fmt.Fprintf(w, "%+v", err)
 	}
@@ -154,21 +178,29 @@ func updateInfection(w http.ResponseWriter, r *http.Request) {
 }
 
 // Function to find Percentage of infected/non-infected survivors
-func percentageSpecification(w http.ResponseWriter, r *http.Request) {
-	client, ctx, cancel, err := mongodb.MongoDBconnect(DBCONN)
+func (h Handlers) PercentageSpecification(w http.ResponseWriter, r *http.Request) {
+
+	var env models.EnvVariables
+	err := envconfig.Process("robot_apocalypse", &env)
+	if err != nil {
+		log.Fatal("unable to initialize environment variables", err.Error())
+	}
+
+	h.client, h.ctx, h.cancel, err = mongodb.MongoDBconnect(env.DatabaseURL)
 	if err != nil {
 		panic(err)
 	}
-	defer mongodb.MongoDBclose(client, ctx, cancel)
+	defer mongodb.MongoDBclose(h.client, h.ctx, h.cancel)
 
 	var total_count, count int64
 	filter := bson.M{
 		"Id": bson.M{"$ne": ""},
 	}
 	//Fetch total document count
-	total_count, err = mongodb.MongoDBCountDocuments(client, ctx, helpers.GetenvData("DB_NAME"), helpers.GetenvData("COLLECTION_NAME"), filter)
+	total_count, err = mongodb.MongoDBCountDocuments(h.client, h.ctx, env.DatabaseName, env.Collection, filter)
 	if err != nil {
 		fmt.Fprintf(w, "%+v", err)
+		fmt.Println(err)
 	}
 
 	vars := mux.Vars(r)
@@ -187,9 +219,10 @@ func percentageSpecification(w http.ResponseWriter, r *http.Request) {
 	default:
 		fmt.Fprintf(w, "%+v", "404 page not found")
 	}
-	count, err = mongodb.MongoDBCountDocuments(client, ctx, helpers.GetenvData("DB_NAME"), helpers.GetenvData("COLLECTION_NAME"), filter)
+	count, err = mongodb.MongoDBCountDocuments(h.client, h.ctx, env.DatabaseName, env.Collection, filter)
 	if err != nil {
 		fmt.Fprintf(w, "%+v", err)
+		fmt.Println(err)
 	}
 	// Calculate Percentage
 	percentage := int((float64(count) / float64(total_count)) * 100)
@@ -206,15 +239,20 @@ func percentageSpecification(w http.ResponseWriter, r *http.Request) {
 }
 
 //Function to List infected/non-infected survivors
-func listSurvivors(w http.ResponseWriter, r *http.Request) {
+func (h Handlers) ListSurvivors(w http.ResponseWriter, r *http.Request) {
 
-	client, ctx, cancel, err := mongodb.MongoDBconnect(DBCONN)
+	var env models.EnvVariables
+	err := envconfig.Process("robot_apocalypse", &env)
+	if err != nil {
+		log.Fatal("unable to initialize environment variables", err.Error())
+	}
+	h.client, h.ctx, h.cancel, err = mongodb.MongoDBconnect(env.DatabaseURL)
 	if err != nil {
 		panic(err)
 	}
 
 	// Free the resource when main function is  returned
-	defer mongodb.MongoDBclose(client, ctx, cancel)
+	defer mongodb.MongoDBclose(h.client, h.ctx, h.cancel)
 
 	// create a filter an option of type interface,
 	// that stores bjson objects.
@@ -234,12 +272,12 @@ func listSurvivors(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "%+v", "404 page not found")
 	}
 	option = bson.D{{"_id", 0}}
-	cursor, err := mongodb.MongoDBquery(client, ctx, helpers.GetenvData("DB_NAME"), helpers.GetenvData("COLLECTION_NAME"), filter, option)
+	cursor, err := mongodb.MongoDBquery(h.client, h.ctx, env.DatabaseName, env.Collection, filter, option)
 	if err != nil {
 		panic(err)
 	}
 	var results []bson.M
-	if err := cursor.All(ctx, &results); err != nil {
+	if err := cursor.All(h.ctx, &results); err != nil {
 		panic(err)
 	}
 
@@ -251,10 +289,15 @@ func listSurvivors(w http.ResponseWriter, r *http.Request) {
 }
 
 // Function to Connect to the Robot CPU system
-func listAllRobots(w http.ResponseWriter, r *http.Request) {
+func (h Handlers) ListAllRobots(w http.ResponseWriter, r *http.Request) {
 
+	var env models.EnvVariables
+	err := envconfig.Process("robot_apocalypse", &env)
+	if err != nil {
+		log.Fatal("unable to initialize environment variables", err.Error())
+	}
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", helpers.GetenvData("ROBO_CPU_URL"), nil)
+	req, err := http.NewRequest("GET", env.RoboCpuUrl, nil)
 	if err != nil {
 		fmt.Print(err.Error())
 	}
